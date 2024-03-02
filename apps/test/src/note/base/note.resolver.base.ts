@@ -19,31 +19,31 @@ import { GqlDefaultAuthGuard } from "../../auth/gqlDefaultAuth.guard";
 import * as common from "@nestjs/common";
 import { AclFilterResponseInterceptor } from "../../interceptors/aclFilterResponse.interceptor";
 import { AclValidateRequestInterceptor } from "../../interceptors/aclValidateRequest.interceptor";
-import { User } from "./User";
-import { UserCountArgs } from "./UserCountArgs";
-import { UserFindManyArgs } from "./UserFindManyArgs";
-import { UserFindUniqueArgs } from "./UserFindUniqueArgs";
-import { CreateUserArgs } from "./CreateUserArgs";
-import { UpdateUserArgs } from "./UpdateUserArgs";
-import { DeleteUserArgs } from "./DeleteUserArgs";
-import { Note } from "../../note/base/Note";
-import { UserService } from "../user.service";
+import { Note } from "./Note";
+import { NoteCountArgs } from "./NoteCountArgs";
+import { NoteFindManyArgs } from "./NoteFindManyArgs";
+import { NoteFindUniqueArgs } from "./NoteFindUniqueArgs";
+import { CreateNoteArgs } from "./CreateNoteArgs";
+import { UpdateNoteArgs } from "./UpdateNoteArgs";
+import { DeleteNoteArgs } from "./DeleteNoteArgs";
+import { User } from "../../user/base/User";
+import { NoteService } from "../note.service";
 @common.UseGuards(GqlDefaultAuthGuard, gqlACGuard.GqlACGuard)
-@graphql.Resolver(() => User)
-export class UserResolverBase {
+@graphql.Resolver(() => Note)
+export class NoteResolverBase {
   constructor(
-    protected readonly service: UserService,
+    protected readonly service: NoteService,
     protected readonly rolesBuilder: nestAccessControl.RolesBuilder
   ) {}
 
   @graphql.Query(() => MetaQueryPayload)
   @nestAccessControl.UseRoles({
-    resource: "User",
+    resource: "Note",
     action: "read",
     possession: "any",
   })
-  async _usersMeta(
-    @graphql.Args() args: UserCountArgs
+  async _notesMeta(
+    @graphql.Args() args: NoteCountArgs
   ): Promise<MetaQueryPayload> {
     const result = await this.service.count(args);
     return {
@@ -52,25 +52,25 @@ export class UserResolverBase {
   }
 
   @common.UseInterceptors(AclFilterResponseInterceptor)
-  @graphql.Query(() => [User])
+  @graphql.Query(() => [Note])
   @nestAccessControl.UseRoles({
-    resource: "User",
+    resource: "Note",
     action: "read",
     possession: "any",
   })
-  async users(@graphql.Args() args: UserFindManyArgs): Promise<User[]> {
-    return this.service.users(args);
+  async notes(@graphql.Args() args: NoteFindManyArgs): Promise<Note[]> {
+    return this.service.notes(args);
   }
 
   @common.UseInterceptors(AclFilterResponseInterceptor)
-  @graphql.Query(() => User, { nullable: true })
+  @graphql.Query(() => Note, { nullable: true })
   @nestAccessControl.UseRoles({
-    resource: "User",
+    resource: "Note",
     action: "read",
     possession: "own",
   })
-  async user(@graphql.Args() args: UserFindUniqueArgs): Promise<User | null> {
-    const result = await this.service.user(args);
+  async note(@graphql.Args() args: NoteFindUniqueArgs): Promise<Note | null> {
+    const result = await this.service.note(args);
     if (result === null) {
       return null;
     }
@@ -78,21 +78,21 @@ export class UserResolverBase {
   }
 
   @common.UseInterceptors(AclValidateRequestInterceptor)
-  @graphql.Mutation(() => User)
+  @graphql.Mutation(() => Note)
   @nestAccessControl.UseRoles({
-    resource: "User",
+    resource: "Note",
     action: "create",
     possession: "any",
   })
-  async createUser(@graphql.Args() args: CreateUserArgs): Promise<User> {
-    return await this.service.createUser({
+  async createNote(@graphql.Args() args: CreateNoteArgs): Promise<Note> {
+    return await this.service.createNote({
       ...args,
       data: {
         ...args.data,
 
-        notes: args.data.notes
+        user: args.data.user
           ? {
-              connect: args.data.notes,
+              connect: args.data.user,
             }
           : undefined,
       },
@@ -100,22 +100,22 @@ export class UserResolverBase {
   }
 
   @common.UseInterceptors(AclValidateRequestInterceptor)
-  @graphql.Mutation(() => User)
+  @graphql.Mutation(() => Note)
   @nestAccessControl.UseRoles({
-    resource: "User",
+    resource: "Note",
     action: "update",
     possession: "any",
   })
-  async updateUser(@graphql.Args() args: UpdateUserArgs): Promise<User | null> {
+  async updateNote(@graphql.Args() args: UpdateNoteArgs): Promise<Note | null> {
     try {
-      return await this.service.updateUser({
+      return await this.service.updateNote({
         ...args,
         data: {
           ...args.data,
 
-          notes: args.data.notes
+          user: args.data.user
             ? {
-                connect: args.data.notes,
+                connect: args.data.user,
               }
             : undefined,
         },
@@ -130,15 +130,15 @@ export class UserResolverBase {
     }
   }
 
-  @graphql.Mutation(() => User)
+  @graphql.Mutation(() => Note)
   @nestAccessControl.UseRoles({
-    resource: "User",
+    resource: "Note",
     action: "delete",
     possession: "any",
   })
-  async deleteUser(@graphql.Args() args: DeleteUserArgs): Promise<User | null> {
+  async deleteNote(@graphql.Args() args: DeleteNoteArgs): Promise<Note | null> {
     try {
-      return await this.service.deleteUser(args);
+      return await this.service.deleteNote(args);
     } catch (error) {
       if (isRecordNotFoundError(error)) {
         throw new GraphQLError(
@@ -150,17 +150,17 @@ export class UserResolverBase {
   }
 
   @common.UseInterceptors(AclFilterResponseInterceptor)
-  @graphql.ResolveField(() => Note, {
+  @graphql.ResolveField(() => User, {
     nullable: true,
-    name: "notes",
+    name: "user",
   })
   @nestAccessControl.UseRoles({
-    resource: "Note",
+    resource: "User",
     action: "read",
     possession: "any",
   })
-  async getNotes(@graphql.Parent() parent: User): Promise<Note | null> {
-    const result = await this.service.getNotes(parent.id);
+  async getUser(@graphql.Parent() parent: Note): Promise<User | null> {
+    const result = await this.service.getUser(parent.id);
 
     if (!result) {
       return null;
